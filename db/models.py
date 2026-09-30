@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Identity, func
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Identity, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
@@ -11,6 +11,7 @@ class User(Base):
     telegram_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     full_name: Mapped[str]
     username: Mapped[str | None]
+    is_active: Mapped[bool] = mapped_column(Boolean(), default=True)
     current_streak: Mapped[int] = mapped_column(default=0)
     highest_streak: Mapped[int] = mapped_column(default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -21,7 +22,7 @@ class Activity(Base):
     __tablename__ = 'activities'
 
     id: Mapped[int] = mapped_column(Identity(always=True), primary_key=True)
-    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('users.telegram_id'))
+    telegram_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('users.telegram_id'))
     duration_minutes: Mapped[int]
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
