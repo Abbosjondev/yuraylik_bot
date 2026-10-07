@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import date, datetime
 
-from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Identity, func
+from sqlalchemy import BigInteger, Boolean, Date, DateTime, ForeignKey, Identity, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
@@ -12,6 +12,7 @@ class User(Base):
     full_name: Mapped[str]
     username: Mapped[str | None]
     is_active: Mapped[bool] = mapped_column(Boolean(), default=True)
+    is_offer_accepted: Mapped[bool] = mapped_column(Boolean(), server_default='false')
     current_streak: Mapped[int] = mapped_column(default=0)
     highest_streak: Mapped[int] = mapped_column(default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -24,6 +25,10 @@ class Activity(Base):
     id: Mapped[int] = mapped_column(Identity(always=True), primary_key=True)
     telegram_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('users.telegram_id'))
     duration_minutes: Mapped[int]
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    record_date: Mapped[date] = mapped_column(Date, server_default=func.current_date())
 
     user: Mapped[User] = relationship(back_populates="activities")
+
+    __table_args__ = (
+        UniqueConstraint('telegram_id', 'record_date', name='uq_user_record_date'),
+    )
