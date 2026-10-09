@@ -13,11 +13,12 @@ from middlewares.new_user import DatabaseUpsertMiddleware
 from handlers.start import router as start_router
 from handlers.chat_member import router as chat_member_router
 from handlers.activity import router as activity_router
+from handlers.statistics import router as statistics_router
 
 dp = Dispatcher()
 dp.update.middleware(DatabaseMiddleware())
 dp.message.middleware(DatabaseUpsertMiddleware())
-dp.include_routers(start_router, chat_member_router, activity_router)
+dp.include_routers(start_router, chat_member_router, activity_router, statistics_router)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

@@ -1,12 +1,13 @@
 from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import String, func, literal_column
+from sqlalchemy import literal_column, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.dialects.postgresql import insert
 
 from db.models import Activity, User
 
+TASHKENT_TZ = ZoneInfo("Asia/Tashkent")
 
 async def add_or_update_user(
     session: AsyncSession, telegram_id: int, full_name: str, username: str | None
@@ -25,7 +26,7 @@ async def add_or_update_user(
 async def add_or_update_activity(session: AsyncSession, telegram_id: int, minutes: int):
     stmt = insert(Activity).values(
         telegram_id=telegram_id,
-        record_date=datetime.now(tz=timezone.utc) + timedelta(hours=5),
+        record_date=datetime.now(tz=TASHKENT_TZ).date(),
         duration_minutes=minutes,
     )
 
@@ -49,3 +50,36 @@ async def add_or_update_activity(session: AsyncSession, telegram_id: int, minute
         raise RuntimeError("Activity yozib bo'lmadi.")
 
     return {"is_updated": not res.is_inserted, "duration_minutes": res.duration_minutes}
+
+async def update_user_streak(session: AsyncSession, telegram_id: int, minutes: int):
+    user = await session.get(User, telegram_id)
+    
+    if not user: return
+    today = datetime.now(tz=TASHKENT_TZ).date()
+    user.total_minutes += minutes
+    
+    if user.last_activity_date is None:
+        user.current_streak = 1
+        user.last_activity_date = today
+    else:
+        last_date = (
+            user.last_activity_date.date()
+            if isinstance(user.last_activity_date, datetime)
+            else user.last_activity_date
+        )
+
+        gap = (today - last_date).days
+
+        if gap == 0:
+            pass
+        elif gap <= 2:
+            user.current_streak += 1
+            user.last_activity_date = today
+        else:
+            user.current_streak = 1
+            user.last_activity_date = today
+
+    user.highest_streak = max(user.current_streak, user.highest_streak)
+
+    await session.commit()
+    

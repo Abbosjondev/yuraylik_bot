@@ -2,7 +2,7 @@ from aiogram import F, Router
 from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
-from db.crud import add_or_update_activity
+from db.crud import add_or_update_activity, update_user_streak
 from handlers.functions import show_home_menu
 from keyboards.reply import back_keyboard
 from .fsm import AddRecordFSM
@@ -54,3 +54,4 @@ async def add_record_or_back(message: Message, state: FSMContext, session: Async
     await message.answer(body, reply_markup=ReplyKeyboardRemove())
     await show_home_menu(message)
     await state.clear()
+    await update_user_streak(session, message.from_user.id, number)

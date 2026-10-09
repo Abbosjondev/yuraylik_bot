@@ -3,9 +3,10 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder
 def home_menu_keyboards():
     builder = ReplyKeyboardBuilder()
     builder.button(text="➕ Kiritish")
+    builder.button(text="⚡️ Statistika")
     builder.button(text="🏆 Reyting")
     builder.button(text="⚙️ Sozlamalar")
-    builder.adjust(1, 2)
+    builder.adjust(1, 1, 2)
 
     return builder.as_markup(resize_keyboard=True)
 
