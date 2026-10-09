@@ -4,10 +4,9 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import literal_column, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.dialects.postgresql import insert
+from core.config import TASHKENT_TZ
 
 from db.models import Activity, User
-
-TASHKENT_TZ = ZoneInfo("Asia/Tashkent")
 
 async def add_or_update_user(
     session: AsyncSession, telegram_id: int, full_name: str, username: str | None

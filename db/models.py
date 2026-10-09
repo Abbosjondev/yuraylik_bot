@@ -30,6 +30,8 @@ class User(Base):
     highest_streak: Mapped[int] = mapped_column(default=0)
     total_minutes: Mapped[int] = mapped_column(default=0, server_default="0")
     last_activity_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    notification_time: Mapped[str | None] = mapped_column(String(5))
+    is_visible: Mapped[bool] = mapped_column(Boolean(), default=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -42,7 +44,8 @@ class User(Base):
             text("current_streak DESC"),
             text("highest_streak DESC"),
             text("total_minutes DESC"),
-        )
+        ),
+        Index("idx_user_reminder_active", "notification_time", "is_active"),
     )
 
 

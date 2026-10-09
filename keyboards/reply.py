@@ -19,8 +19,3 @@ def back_keyboard(*, input_field_placeholder=None, one_time_keyboard=False):
         input_field_placeholder=input_field_placeholder,
         one_time_keyboard=one_time_keyboard,
     )
-
-def settings_menu_keyboard():
-    builder = ReplyKeyboardBuilder()
-    builder.button(text="Kundalik eslatma")
-    builder.button(text="Reytingda chiqishni o'chirish/yoqish")

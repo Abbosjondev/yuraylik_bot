@@ -55,7 +55,7 @@ async def rating_menu(message: Message, session: AsyncSession):
         await message.answer(str(rating_cache["top_20"]), parse_mode="HTML")
         return
 
-    stmt = select(User).order_by(
+    stmt = select(User).where(User.is_visible == True).order_by(
         User.current_streak.desc(),
         User.highest_streak.desc(),
         User.total_minutes.desc()
@@ -74,6 +74,7 @@ async def rating_menu(message: Message, session: AsyncSession):
         self_name = html.escape(u.full_name)
         lines.append(f"<b>{index}.</b> <a href=\"tg://user?id={u.telegram_id}\">{self_name}</a> - 🔥 {u.current_streak} / {u.total_minutes} daq")
 
+    lines.append("\n<i>reyting har soatda yangilanadi</i>")
     final_text = "\n".join(lines)
     rating_cache["top_20"] = final_text
 

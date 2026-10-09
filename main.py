@@ -4,7 +4,7 @@ import logging
 from aiogram import Bot, Dispatcher
 from sqlalchemy import select
 
-from core.config import BOT_TOKEN
+from core.config import BOT_TOKEN, logger
 from db.database import AsyncSessionLocal
 from db.models import User
 from db.bitmaps import user_records, offer_accepted_users
@@ -14,15 +14,17 @@ from handlers.start import router as start_router
 from handlers.chat_member import router as chat_member_router
 from handlers.activity import router as activity_router
 from handlers.statistics import router as statistics_router
+from handlers.settings import router as settings_router
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+from services.notification_service import check_and_send_notification
 
 dp = Dispatcher()
 dp.update.middleware(DatabaseMiddleware())
 dp.message.middleware(DatabaseUpsertMiddleware())
-dp.include_routers(start_router, chat_member_router, activity_router, statistics_router)
+dp.include_routers(start_router, chat_member_router, activity_router, statistics_router, settings_router)
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
+scheduler = AsyncIOScheduler(timezone="Asia/Tashkent")
 
 async def onstartup():
     logger.info("Kesh ma'lumotlar bazasidan yuklanmoqda...")
@@ -44,6 +46,18 @@ async def main():
     bot = Bot(BOT_TOKEN)
 
     dp.startup.register(onstartup)
+
+    scheduler.add_job(
+        check_and_send_notification,
+        trigger="cron",
+        minute='*',
+        second='0',
+        kwargs={"bot": bot},
+        max_instances=1,
+        coalesce=True
+    )
+
+    scheduler.start()
 
     await dp.start_polling(bot)
 
