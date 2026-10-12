@@ -1,10 +1,13 @@
+import os
+from aiohttp import web
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+
 import asyncio
-import logging
 
 from aiogram import Bot, Dispatcher
 from sqlalchemy import select
 
-from core.config import BOT_TOKEN, logger
+from core.config import BOT_TOKEN, WEBHOOK_URL, logger
 from db.database import AsyncSessionLocal
 from db.models import User
 from db.bitmaps import user_records, offer_accepted_users
@@ -26,7 +29,7 @@ dp.include_routers(start_router, chat_member_router, activity_router, statistics
 
 scheduler = AsyncIOScheduler(timezone="Asia/Tashkent")
 
-async def onstartup():
+async def onstartup(bot: Bot):
     logger.info("Kesh ma'lumotlar bazasidan yuklanmoqda...")
     async with AsyncSessionLocal() as session:
 
@@ -40,12 +43,8 @@ async def onstartup():
         offer_accepted_users.update(offer_accepted_ids)
     logger.info(f"Kesh muvaffaqiyatli tiklandi! {len(user_records)=} va {len(offer_accepted_users)=}")
 
-async def main():
-    if not BOT_TOKEN:
-        raise ValueError("BOT_TOKEN not found!")
-    bot = Bot(BOT_TOKEN)
-
-    dp.startup.register(onstartup)
+    await bot.set_webhook(f"{WEBHOOK_URL}/webhook")
+    logger.info("Bot webhook ishga tushdi!")
 
     scheduler.add_job(
         check_and_send_notification,
@@ -59,7 +58,29 @@ async def main():
 
     scheduler.start()
 
-    await dp.start_polling(bot)
+async def on_bot_shutdown(bot: Bot):
+    await bot.delete_webhook()
+    logger.info("Bot to'xtatildi!")
+
+dp.startup.register(onstartup)
+dp.shutdown.register(on_bot_shutdown)
+
+async def main():
+    if not BOT_TOKEN:
+        raise ValueError("BOT_TOKEN not found!")
+    bot = Bot(BOT_TOKEN)
+
+    app = web.Application()
+
+    webhook_request_handler = SimpleRequestHandler(
+        dispatcher=dp,
+        bot=bot
+    )
+
+    webhook_request_handler.register(app, path='/webhook')
+
+    setup_application(app, dp, bot=bot)
+    web.run_app(app, host="0.0.0.0", port=8000)
 
 try:
     if __name__ == "__main__":
