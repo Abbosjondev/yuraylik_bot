@@ -19,6 +19,7 @@ from handlers.activity import router as activity_router
 from handlers.statistics import router as statistics_router
 from handlers.settings import router as settings_router
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+import asyncio
 
 from services.notification_service import check_and_send_notification
 
@@ -26,8 +27,6 @@ dp = Dispatcher()
 dp.update.middleware(DatabaseMiddleware())
 dp.message.middleware(DatabaseUpsertMiddleware())
 dp.include_routers(start_router, chat_member_router, activity_router, statistics_router, settings_router)
-
-scheduler = AsyncIOScheduler(timezone="Asia/Tashkent")
 
 async def onstartup(bot: Bot):
     logger.info("Kesh ma'lumotlar bazasidan yuklanmoqda...")
@@ -45,6 +44,8 @@ async def onstartup(bot: Bot):
 
     await bot.set_webhook(f"{WEBHOOK_URL}/webhook")
     logger.info("Bot webhook ishga tushdi!")
+
+    scheduler = AsyncIOScheduler(timezone="Asia/Tashkent")
 
     scheduler.add_job(
         check_and_send_notification,
@@ -65,7 +66,7 @@ async def on_bot_shutdown(bot: Bot):
 dp.startup.register(onstartup)
 dp.shutdown.register(on_bot_shutdown)
 
-async def main():
+def main():
     if not BOT_TOKEN:
         raise ValueError("BOT_TOKEN not found!")
     bot = Bot(BOT_TOKEN)
@@ -84,6 +85,6 @@ async def main():
 
 try:
     if __name__ == "__main__":
-        asyncio.run(main())
+        main()
 except KeyboardInterrupt:
     pass
